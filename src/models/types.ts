@@ -27,6 +27,8 @@ export interface Column {
   order: number;
   /** Tasks in a completion column are considered done. */
   isDoneColumn: boolean;
+  /** Optional accent color for the list (hex), or null for the default. */
+  color: string | null;
   createdAt: string;
   updatedAt: string;
 }

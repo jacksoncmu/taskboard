@@ -4,22 +4,31 @@ import { CSS } from "@dnd-kit/utilities";
 import {
   ArrowLeft,
   ArrowRight,
+  Brush,
+  Check,
+  CircleCheckBig,
+  Copy,
   EllipsisVertical,
   GripVertical,
+  ListFilter,
+  ListX,
   Pencil,
   Plus,
   Trash2,
 } from "lucide-react";
+import { COLUMN_SORTS, TAG_COLORS } from "@/models/constants";
 import type { Column, Tag, Task } from "@/models/types";
 import { actions } from "@/store/actions";
 import { useUI } from "@/store/ui";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
-  DropdownMenuCheckboxItem,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { cn, pluralize } from "@/lib/utils";
@@ -69,7 +78,11 @@ export const BoardColumn = React.memo(function BoardColumn({
   return (
     <section
       ref={setNodeRef}
-      style={{ transform: CSS.Translate.toString(transform), transition }}
+      style={{
+        transform: CSS.Translate.toString(transform),
+        transition,
+        background: column.color ? `color-mix(in srgb, ${column.color} 10%, var(--card))` : undefined,
+      }}
       className={cn(
         "flex max-h-full w-[85vw] shrink-0 snap-start flex-col overflow-hidden rounded-2xl bg-card shadow-g1 sm:w-[425px]",
         isDragging && "opacity-50 ring-2 ring-primary/40"
@@ -108,6 +121,7 @@ export const BoardColumn = React.memo(function BoardColumn({
         ) : (
           <button
             className="min-w-0 flex-1 truncate rounded-md px-1 py-1 text-left text-lg text-foreground hover:bg-hover"
+            style={column.color ? { color: column.color } : undefined}
             onClick={() => setRenaming(true)}
             title="Click to rename"
           >
@@ -128,20 +142,55 @@ export const BoardColumn = React.memo(function BoardColumn({
               <EllipsisVertical />
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" onCloseAutoFocus={(e) => e.preventDefault()}>
-            <DropdownMenuItem onSelect={() => setAdding(true)}>
-              <Plus /> Add task
-            </DropdownMenuItem>
+          <DropdownMenuContent align="end" className="w-[280px]" onCloseAutoFocus={(e) => e.preventDefault()}>
+            <DropdownMenuSub>
+              <DropdownMenuSubTrigger>
+                <ListFilter /> Sort by
+              </DropdownMenuSubTrigger>
+              <DropdownMenuSubContent>
+                {COLUMN_SORTS.map((o) => (
+                  <DropdownMenuItem key={o.value} onSelect={() => actions.sortColumn(column.id, o.value)}>
+                    {o.label}
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuSubContent>
+            </DropdownMenuSub>
             <DropdownMenuItem onSelect={() => setRenaming(true)}>
               <Pencil /> Rename list
             </DropdownMenuItem>
-            <DropdownMenuCheckboxItem
-              checked={column.isDoneColumn}
-              onCheckedChange={(c) => actions.setDoneColumn(column.id, c === true)}
-            >
-              Completion list
-            </DropdownMenuCheckboxItem>
-            <DropdownMenuSeparator />
+            <DropdownMenuSub>
+              <DropdownMenuSubTrigger>
+                <Brush /> Set color
+              </DropdownMenuSubTrigger>
+              <DropdownMenuSubContent className="min-w-0 p-3">
+                <div className="grid grid-cols-4 gap-2">
+                  <DropdownMenuItem
+                    className="size-8 justify-center rounded-full border border-border-strong p-0"
+                    aria-label="Default color"
+                    onSelect={() => actions.setColumnColor(column.id, null)}
+                  >
+                    {!column.color && <Check className="!text-foreground" />}
+                  </DropdownMenuItem>
+                  {TAG_COLORS.map((c) => (
+                    <DropdownMenuItem
+                      key={c.value}
+                      className="size-8 justify-center rounded-full p-0 data-[highlighted]:opacity-80"
+                      style={{ background: c.value }}
+                      aria-label={c.name}
+                      onSelect={() => actions.setColumnColor(column.id, c.value)}
+                    >
+                      {column.color === c.value && <Check className="!text-white" />}
+                    </DropdownMenuItem>
+                  ))}
+                </div>
+              </DropdownMenuSubContent>
+            </DropdownMenuSub>
+            <DropdownMenuItem onSelect={() => actions.duplicateColumn(column.id)}>
+              <Copy /> Duplicate list
+            </DropdownMenuItem>
+            <DropdownMenuItem onSelect={() => actions.setDoneColumn(column.id, !column.isDoneColumn)}>
+              <CircleCheckBig /> {column.isDoneColumn ? "Unmark completion list" : "Mark as completion list"}
+            </DropdownMenuItem>
             <DropdownMenuItem disabled={index === 0} onSelect={() => onMove(-1)}>
               <ArrowLeft /> Move left
             </DropdownMenuItem>
@@ -152,21 +201,27 @@ export const BoardColumn = React.memo(function BoardColumn({
             <DropdownMenuItem destructive onSelect={confirmDelete}>
               <Trash2 /> Delete list
             </DropdownMenuItem>
+            <DropdownMenuItem destructive onSelect={() => actions.deleteCompletedInColumn(column.id)}>
+              <ListX /> Delete all completed tasks
+            </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       </header>
 
       <div className="px-2 pb-1">
-        {adding ? (
-          <QuickAdd column={column} onDone={() => setAdding(false)} />
-        ) : (
-          <button
-            className="flex h-12 w-full items-center gap-4 rounded-full px-2 text-base text-primary transition-colors hover:bg-primary/[0.06]"
-            onClick={() => setAdding(true)}
-          >
-            <Plus className="size-6" strokeWidth={1.75} /> Add a task
-          </button>
-        )}
+        <button
+          className="flex h-12 w-full items-center gap-4 rounded-full px-2 text-base text-primary transition-colors hover:bg-primary/[0.06]"
+          onClick={() => setAdding(true)}
+        >
+          {adding ? (
+            <span className="flex size-6 items-center justify-center rounded-full bg-primary text-primary-foreground">
+              <Plus className="size-4" strokeWidth={2.5} />
+            </span>
+          ) : (
+            <Plus className="size-6" strokeWidth={1.75} />
+          )}
+          Add a task
+        </button>
       </div>
 
       <div className="min-h-2 flex-1 overflow-y-auto pb-2 scrollbar-thin">
@@ -179,6 +234,7 @@ export const BoardColumn = React.memo(function BoardColumn({
                 tags={t.tagIds.map((id) => tagsById[id]).filter(Boolean)}
               />
             ))}
+            {adding && <QuickAdd column={column} onDone={() => setAdding(false)} />}
             {tasks.length === 0 && !adding && (
               <div className="mx-4 my-2 flex h-14 items-center justify-center rounded-xl border-2 border-dashed border-border text-sm text-subtle-foreground">
                 {filtered && totalCount > 0 ? "No matching tasks" : "Drop tasks here"}
@@ -193,43 +249,37 @@ export const BoardColumn = React.memo(function BoardColumn({
 
 function QuickAdd({ column, onDone }: { column: Column; onDone: () => void }) {
   const [value, setValue] = React.useState("");
-  const ref = React.useRef<HTMLTextAreaElement>(null);
+  const ref = React.useRef<HTMLInputElement>(null);
+  React.useEffect(() => {
+    ref.current?.scrollIntoView({ block: "nearest" });
+  }, []);
   const submit = () => {
     if (!value.trim()) return;
-    actions.addTask({ boardId: column.boardId, columnId: column.id, title: value }, "start");
+    actions.addTask({ boardId: column.boardId, columnId: column.id, title: value });
     setValue("");
+    // Keep the input visible below the new task.
+    requestAnimationFrame(() => ref.current?.scrollIntoView({ block: "nearest" }));
   };
   return (
-    <div className="mx-2 mb-2 rounded-xl border border-primary bg-card p-2 shadow-g1">
-      <textarea
+    <div className="flex items-center gap-4 px-4 py-3">
+      <span className="size-5 shrink-0 rounded-full border-2 border-[#5f6368] dark:border-muted-foreground" aria-hidden />
+      <input
         ref={ref}
         autoFocus
-        rows={2}
         value={value}
-        placeholder="Enter a title for this task…"
+        placeholder="New task title"
         aria-label={`New task in ${column.name}`}
-        onChange={(e) => setValue(e.target.value.replace(/\n/g, ""))}
+        onChange={(e) => setValue(e.target.value)}
         onKeyDown={(e) => {
-          if (e.key === "Enter") {
-            e.preventDefault();
-            submit();
-          }
+          if (e.key === "Enter") submit();
           if (e.key === "Escape") onDone();
         }}
         onBlur={() => {
           if (value.trim()) submit();
           onDone();
         }}
-        className="w-full resize-none bg-transparent text-base outline-none placeholder:text-subtle-foreground"
+        className="h-7 min-w-0 flex-1 border-b border-primary bg-transparent text-base outline-none placeholder:text-subtle-foreground"
       />
-      <div className="flex items-center justify-end gap-1">
-        <Button size="sm" variant="text" onMouseDown={(e) => e.preventDefault()} onClick={onDone}>
-          Cancel
-        </Button>
-        <Button size="sm" onMouseDown={(e) => e.preventDefault()} onClick={submit} disabled={!value.trim()}>
-          Add
-        </Button>
-      </div>
     </div>
   );
 }

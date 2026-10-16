@@ -38,6 +38,15 @@ export const PRIORITY_BY_VALUE = Object.fromEntries(PRIORITIES.map((p) => [p.val
   PriorityMeta
 >;
 
+/** One-shot sort orders offered by a list's "Sort by" menu. */
+export const COLUMN_SORTS = [
+  { value: "dueDate", label: "Due date" },
+  { value: "title", label: "Title" },
+  { value: "priority", label: "Priority" },
+  { value: "createdAt", label: "Date created" },
+] as const;
+export type ColumnSort = (typeof COLUMN_SORTS)[number]["value"];
+
 export const TAG_COLORS: { name: string; value: string }[] = [
   { name: "Tomato", value: "#d50000" },
   { name: "Flamingo", value: "#e67c73" },

@@ -256,7 +256,7 @@ export function BoardView({ boardId }: { boardId: ID }) {
           },
         }}
       >
-        <div className="flex min-h-0 flex-1 snap-x items-start gap-5 overflow-x-auto px-4 pb-4 scrollbar-thin sm:px-5">
+        <div className="flex min-h-0 flex-1 snap-x scroll-px-4 items-start gap-5 overflow-x-auto px-4 pb-4 scrollbar-thin sm:scroll-px-5 sm:px-5">
           <SortableContext items={columns.map((c) => COL + c.id)} strategy={horizontalListSortingStrategy}>
             {columns.map((c, i) => (
               <BoardColumn

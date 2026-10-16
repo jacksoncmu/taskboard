@@ -30,8 +30,8 @@ export const TaskCardBody = React.memo(function TaskCardBody({ task, tags, overl
   return (
     <div
       className={cn(
-        "group relative bg-card px-4 py-3 transition-colors duration-150 hover:bg-surface-2",
-        overlay && "cursor-grabbing rounded-xl shadow-g3",
+        "group relative px-4 py-3 transition-colors duration-150 hover:bg-hover",
+        overlay && "cursor-grabbing rounded-xl bg-card shadow-g3",
         dragging && "opacity-40"
       )}
     >

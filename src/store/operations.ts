@@ -2,7 +2,7 @@
  * Pure, immutable operations on AppData. Each returns a new AppData; unchanged entities keep
  * their object identity so the persistence layer can diff cheaply by reference.
  */
-import { DEFAULT_COLUMNS } from "@/models/constants";
+import { DEFAULT_COLUMNS, PRIORITY_BY_VALUE, type ColumnSort } from "@/models/constants";
 import { makeBoard, makeColumn, makeTag, makeTask, makeSubtask } from "@/models/factory";
 import type { AppData, Board, Column, ID, Settings, Tag, Task } from "@/models/types";
 import { byOrder, nowIso, uid } from "@/lib/utils";
@@ -114,6 +114,59 @@ export function reorderColumns(data: AppData, boardId: ID, orderedIds: ID[]): Ap
     }
   });
   return changed ? { ...data, columns } : data;
+}
+
+export function setColumnColor(data: AppData, id: ID, color: string | null): AppData {
+  const col = data.columns[id];
+  if (!col || col.color === color) return data;
+  return { ...data, columns: { ...data.columns, [id]: { ...col, color, updatedAt: nowIso() } } };
+}
+
+/** Copies a column and its (non-archived) tasks, placing the copy right after the original. */
+export function duplicateColumn(data: AppData, id: ID): [AppData, ID | null] {
+  const src = data.columns[id];
+  if (!src) return [data, null];
+  const now = nowIso();
+  const copy: Column = { ...src, id: uid(), name: `${src.name} (copy)`, isDoneColumn: false, createdAt: now, updatedAt: now };
+  const tasks = { ...data.tasks };
+  for (const t of tasksOfColumn(data, id)) {
+    const nt: Task = {
+      ...t,
+      id: uid(),
+      columnId: copy.id,
+      tagIds: [...t.tagIds],
+      subtasks: t.subtasks.map((s) => ({ ...s, id: uid() })),
+      createdAt: now,
+      updatedAt: now,
+    };
+    tasks[nt.id] = nt;
+  }
+  const ids = columnsOf(data, src.boardId).map((c) => c.id);
+  ids.splice(ids.indexOf(id) + 1, 0, copy.id);
+  const next = { ...data, columns: { ...data.columns, [copy.id]: copy }, tasks };
+  return [reorderColumns(next, src.boardId, ids), copy.id];
+}
+
+/** Rewrites a column's manual order using the given sort key (a one-shot sort, like Google Tasks). */
+export function sortColumn(data: AppData, id: ID, by: ColumnSort): AppData {
+  const list = tasksOfColumn(data, id, true);
+  const cmp: Record<ColumnSort, (a: Task, b: Task) => number> = {
+    dueDate: (a, b) =>
+      (a.dueDate ?? "9999").localeCompare(b.dueDate ?? "9999") || (a.dueTime ?? "99").localeCompare(b.dueTime ?? "99"),
+    title: (a, b) => a.title.localeCompare(b.title, undefined, { sensitivity: "base", numeric: true }),
+    priority: (a, b) => PRIORITY_BY_VALUE[b.priority].rank - PRIORITY_BY_VALUE[a.priority].rank,
+    createdAt: (a, b) => b.createdAt.localeCompare(a.createdAt),
+  };
+  const sorted = [...list].sort((a, b) => cmp[by](a, b) || a.order - b.order);
+  const tasks = { ...data.tasks };
+  let changed = false;
+  sorted.forEach((t, i) => {
+    if (t.order !== i) {
+      tasks[t.id] = { ...t, order: i, updatedAt: nowIso() };
+      changed = true;
+    }
+  });
+  return changed ? { ...data, tasks } : data;
 }
 
 /** Marks a column as the board's completion column (at most one per board). */

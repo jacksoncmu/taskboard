@@ -8,7 +8,7 @@ export function makeBoard(name: string, order: number): Board {
 
 export function makeColumn(boardId: ID, name: string, order: number, isDoneColumn = false): Column {
   const now = nowIso();
-  return { id: uid(), boardId, name, order, isDoneColumn, createdAt: now, updatedAt: now };
+  return { id: uid(), boardId, name, order, isDoneColumn, color: null, createdAt: now, updatedAt: now };
 }
 
 export function makeTask(input: Partial<Task> & Pick<Task, "boardId" | "columnId" | "title">): Task {

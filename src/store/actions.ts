@@ -4,6 +4,7 @@
  */
 import { toast } from "sonner";
 import type { AppData, ID, Settings, Tag, Task } from "@/models/types";
+import type { ColumnSort } from "@/models/constants";
 import { pluralize } from "@/lib/utils";
 import { buildDemoData } from "@/lib/demo";
 import { store } from "./store";
@@ -65,6 +66,19 @@ export const actions = {
   renameColumn: (id: ID, name: string) => u((d) => ops.renameColumn(d, id, name)),
   reorderColumns: (boardId: ID, ids: ID[]) => u((d) => ops.reorderColumns(d, boardId, ids)),
   setDoneColumn: (id: ID, isDone: boolean) => u((d) => ops.setDoneColumn(d, id, isDone)),
+  setColumnColor: (id: ID, color: string | null) => u((d) => ops.setColumnColor(d, id, color)),
+  sortColumn: (id: ID, by: ColumnSort) => u((d) => ops.sortColumn(d, id, by)),
+  duplicateColumn(id: ID) {
+    u((d) => ops.duplicateColumn(d, id)[0]);
+    toast.success("List duplicated");
+  },
+  deleteCompletedInColumn(id: ID) {
+    const ids = Object.values(store.getState().data.tasks)
+      .filter((t) => t.columnId === id && t.completed)
+      .map((t) => t.id);
+    if (ids.length) actions.deleteTasks(ids);
+    else toast("No completed tasks in this list");
+  },
   deleteColumn(id: ID) {
     const data = store.getState().data;
     const col = data.columns[id];

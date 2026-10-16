@@ -9,10 +9,10 @@ export const DropdownMenuSub = DM.Sub;
 export const DropdownMenuRadioGroup = DM.RadioGroup;
 
 const menuSurface =
-  "z-50 min-w-[200px] max-h-[var(--radix-dropdown-menu-content-available-height)] overflow-y-auto rounded-xl bg-popover py-2 shadow-g2 data-[state=open]:animate-in scrollbar-thin";
+  "z-50 min-w-[200px] max-h-[var(--radix-dropdown-menu-content-available-height)] overflow-y-auto rounded-xl bg-popover py-1.5 shadow-g2 data-[state=open]:animate-in scrollbar-thin";
 
 const itemBase =
-  "relative flex h-10 cursor-pointer select-none items-center gap-3 px-4 text-sm text-foreground outline-none transition-colors data-[highlighted]:bg-hover data-[disabled]:pointer-events-none data-[disabled]:opacity-40 [&_svg]:size-[18px] [&_svg]:shrink-0 [&_svg]:text-muted-foreground";
+  "relative flex h-11 cursor-pointer select-none items-center gap-3 px-4 text-[15px] text-foreground outline-none transition-colors data-[highlighted]:bg-hover data-[disabled]:pointer-events-none data-[disabled]:opacity-40 [&_svg]:size-[18px] [&_svg]:shrink-0 [&_svg]:text-muted-foreground";
 
 export const DropdownMenuContent = React.forwardRef<
   React.ElementRef<typeof DM.Content>,

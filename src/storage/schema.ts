@@ -88,6 +88,7 @@ function normalizeColumn(v: unknown, i: number, now: string): Column {
     name: str(o.name, "Untitled") || "Untitled",
     order: num(o.order, i),
     isDoneColumn: bool(o.isDoneColumn),
+    color: typeof o.color === "string" && /^#[0-9a-f]{6}$/i.test(o.color) ? o.color : null,
     createdAt: isoReq(o.createdAt, now),
     updatedAt: isoReq(o.updatedAt, now),
   };

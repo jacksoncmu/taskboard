@@ -1,13 +1,15 @@
 import * as React from "react";
+import { addDays, format, nextMonday } from "date-fns";
 import {
   Archive,
   ArchiveRestore,
-  Check,
+  ArrowRight,
+  CalendarClock,
+  CalendarX,
   Copy,
+  CornerDownRight,
   EllipsisVertical,
-  FolderInput,
   Pencil,
-  RotateCcw,
   Trash2,
 } from "lucide-react";
 import type { Task } from "@/models/types";
@@ -32,16 +34,29 @@ import { cn } from "@/lib/utils";
 interface Props {
   task: Task;
   className?: string;
-  /** Hide the "Open" item (e.g. inside the detail panel). */
+  /** Inside the detail panel: hide items that only open the panel. */
   inDetail?: boolean;
   onDeleted?: () => void;
 }
+
+/** Opens the detail panel and focuses one of its fields once it has rendered. */
+function openAndFocus(open: () => void, label: string) {
+  open();
+  setTimeout(() => {
+    const el = document.querySelector<HTMLInputElement>(`[role="dialog"] [aria-label="${label}"]`);
+    el?.focus();
+    if (el?.type === "date") el.showPicker?.();
+  }, 250);
+}
+
+const dateKey = (d: Date) => format(d, "yyyy-MM-dd");
 
 export function TaskMenu({ task, className, inDetail, onDeleted }: Props) {
   const data = useAppData();
   const ui = useUI();
   const otherBoards = boardsSorted(data).filter((b) => b.id !== task.boardId);
   const columns = columnsOf(data, task.boardId).filter((c) => c.id !== task.columnId);
+  const setDue = (dueDate: string) => actions.updateTask(task.id, { dueDate });
 
   return (
     <DropdownMenu modal={false}>
@@ -57,47 +72,62 @@ export function TaskMenu({ task, className, inDetail, onDeleted }: Props) {
           <EllipsisVertical />
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()}>
+      <DropdownMenuContent align="end" className="w-[260px]" onClick={(e) => e.stopPropagation()}>
         {!inDetail && (
           <DropdownMenuItem onSelect={() => ui.openTask(task.id)}>
-            <Pencil /> Open details
+            <Pencil /> Edit
           </DropdownMenuItem>
         )}
-        <DropdownMenuItem onSelect={() => actions.toggleCompleted(task.id)}>
-          {task.completed ? <RotateCcw /> : <Check />}
-          {task.completed ? "Mark incomplete" : "Mark complete"}
-        </DropdownMenuItem>
-        <DropdownMenuItem onSelect={() => actions.duplicateTask(task.id)}>
-          <Copy /> Duplicate
-        </DropdownMenuItem>
-        {columns.length > 0 && (
-          <DropdownMenuSub>
-            <DropdownMenuSubTrigger>
-              <FolderInput /> Move to list
-            </DropdownMenuSubTrigger>
-            <DropdownMenuSubContent>
-              {columns.map((c) => (
-                <DropdownMenuItem key={c.id} onSelect={() => actions.moveTask(task.id, c.id, null)}>
-                  <span className="truncate">{c.name}</span>
-                </DropdownMenuItem>
-              ))}
-            </DropdownMenuSubContent>
-          </DropdownMenuSub>
-        )}
         <DropdownMenuSub>
-          <DropdownMenuSubTrigger disabled={otherBoards.length === 0}>
-            <FolderInput /> Move to board
+          <DropdownMenuSubTrigger>
+            <CalendarClock /> Change date
           </DropdownMenuSubTrigger>
           <DropdownMenuSubContent>
-            <DropdownMenuLabel>Boards</DropdownMenuLabel>
-            {otherBoards.map((b) => (
-              <DropdownMenuItem key={b.id} onSelect={() => actions.moveTaskToBoard(task.id, b.id)}>
-                <span className="truncate">{b.name}</span>
-              </DropdownMenuItem>
-            ))}
+            <DropdownMenuItem onSelect={() => setDue(dateKey(new Date()))}>Today</DropdownMenuItem>
+            <DropdownMenuItem onSelect={() => setDue(dateKey(addDays(new Date(), 1)))}>Tomorrow</DropdownMenuItem>
+            <DropdownMenuItem onSelect={() => setDue(dateKey(nextMonday(new Date())))}>Next week</DropdownMenuItem>
+            <DropdownMenuItem onSelect={() => openAndFocus(() => ui.openTask(task.id), "Due date")}>
+              Pick a date…
+            </DropdownMenuItem>
+            {task.dueDate && (
+              <>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onSelect={() => actions.updateTask(task.id, { dueDate: null, dueTime: null })}>
+                  <CalendarX /> Remove date
+                </DropdownMenuItem>
+              </>
+            )}
           </DropdownMenuSubContent>
         </DropdownMenuSub>
-        <DropdownMenuSeparator />
+        <DropdownMenuItem onSelect={() => openAndFocus(() => ui.openTask(task.id), "New subtask")}>
+          <CornerDownRight /> Add a subtask
+        </DropdownMenuItem>
+        <DropdownMenuItem onSelect={() => actions.duplicateTask(task.id)}>
+          <Copy /> Duplicate task
+        </DropdownMenuItem>
+        <DropdownMenuSub>
+          <DropdownMenuSubTrigger disabled={columns.length === 0 && otherBoards.length === 0}>
+            <ArrowRight /> Move to another list
+          </DropdownMenuSubTrigger>
+          <DropdownMenuSubContent className="max-w-[260px]">
+            {columns.map((c) => (
+              <DropdownMenuItem key={c.id} onSelect={() => actions.moveTask(task.id, c.id, null)}>
+                <span className="truncate">{c.name}</span>
+              </DropdownMenuItem>
+            ))}
+            {otherBoards.length > 0 && (
+              <>
+                {columns.length > 0 && <DropdownMenuSeparator />}
+                <DropdownMenuLabel>Other boards</DropdownMenuLabel>
+                {otherBoards.map((b) => (
+                  <DropdownMenuItem key={b.id} onSelect={() => actions.moveTaskToBoard(task.id, b.id)}>
+                    <span className="truncate">{b.name}</span>
+                  </DropdownMenuItem>
+                ))}
+              </>
+            )}
+          </DropdownMenuSubContent>
+        </DropdownMenuSub>
         <DropdownMenuItem
           onSelect={() => {
             actions.archiveTask(task.id, !task.archived);
