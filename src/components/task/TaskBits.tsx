@@ -1,7 +1,7 @@
-import { Calendar, CheckSquare, Flag, Hourglass } from "lucide-react";
+import { CalendarCheck, CheckSquare, Flag, Hourglass } from "lucide-react";
 import type { Priority, Tag, Task } from "@/models/types";
 import { PRIORITY_BY_VALUE } from "@/models/constants";
-import { formatDueLabel, isOverdue, daysUntilDue } from "@/lib/dates";
+import { formatDueLabel, isOverdue } from "@/lib/dates";
 import { cn } from "@/lib/utils";
 
 export function PriorityFlag({ priority, className }: { priority: Priority; className?: string }) {
@@ -52,23 +52,17 @@ export function TagChip({ tag, onRemove, className }: { tag: Tag; onRemove?: () 
 export function DueChip({ task, className }: { task: Task; className?: string }) {
   if (!task.dueDate) return null;
   const overdue = isOverdue(task);
-  const days = daysUntilDue(task);
-  const soon = !task.completed && !overdue && days === 0;
   return (
     <span
       className={cn(
-        "inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-xs",
-        overdue
-          ? "border-transparent bg-destructive-container font-medium text-overdue"
-          : soon
-            ? "border-transparent bg-primary-container text-on-primary-container"
-            : "border-border text-muted-foreground",
-        task.completed && "opacity-70",
+        "inline-flex h-8 items-center gap-1.5 rounded-full border border-border-strong/70 px-3 text-sm",
+        overdue ? "text-overdue" : "text-primary",
+        task.completed && "text-muted-foreground opacity-70",
         className
       )}
       title={overdue ? "Overdue" : "Due date"}
     >
-      <Calendar className="size-3" />
+      <CalendarCheck className="size-4" />
       {formatDueLabel(task)}
     </span>
   );

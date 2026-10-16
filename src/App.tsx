@@ -98,6 +98,7 @@ function Shell() {
   };
 
   let content: React.ReactNode;
+  let isBoard = false;
   if (ui.nav.kind === "smart") {
     content = <SmartViewPage view={ui.nav.view} />;
   } else if (!boardId) {
@@ -120,6 +121,7 @@ function Shell() {
   } else if (ui.view === "calendar") {
     content = <CalendarView boardId={boardId} />;
   } else {
+    isBoard = true;
     content = <BoardView key={boardId} boardId={boardId} />;
   }
 
@@ -150,7 +152,12 @@ function Shell() {
             <span>{storageError}</span>
           </div>
         )}
-        <main className="mx-0 mb-0 min-h-0 flex-1 overflow-hidden bg-surface pt-2 sm:mb-2 sm:mr-2 sm:rounded-[24px] lg:ml-0 sm:ml-2">
+        <main
+          className={cn(
+            "mx-0 mb-0 min-h-0 flex-1 overflow-hidden bg-surface sm:mb-2 sm:mr-2 sm:rounded-[24px] lg:ml-0 sm:ml-2",
+            !isBoard && "pt-2"
+          )}
+        >
           {content}
         </main>
       </div>

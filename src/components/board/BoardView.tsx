@@ -209,9 +209,9 @@ export function BoardView({ boardId }: { boardId: ID }) {
       : 0;
 
   return (
-    <div className="flex h-full min-h-0 flex-col">
+    <div className="board-gradient flex h-full min-h-0 flex-col pt-4 sm:rounded-[24px]">
       {filtered && visibleCount === 0 && totalCount > 0 && (
-        <div className="mx-4 mb-2 flex flex-wrap items-center gap-3 rounded-xl bg-surface-2 px-4 py-2.5 text-sm text-muted-foreground sm:mx-6">
+        <div className="mx-4 mb-3 flex flex-wrap items-center gap-3 rounded-xl bg-card px-4 shadow-g1 py-2.5 text-sm text-muted-foreground sm:mx-6">
           <SearchX className="size-4" />
           <span>No tasks on this board match your search or filters.</span>
           {otherMatches > 0 && (
@@ -256,7 +256,7 @@ export function BoardView({ boardId }: { boardId: ID }) {
           },
         }}
       >
-        <div className="flex min-h-0 flex-1 snap-x items-start gap-3 overflow-x-auto px-4 pb-4 scrollbar-thin sm:px-6">
+        <div className="flex min-h-0 flex-1 snap-x items-start gap-5 overflow-x-auto px-4 pb-4 scrollbar-thin sm:px-5">
           <SortableContext items={columns.map((c) => COL + c.id)} strategy={horizontalListSortingStrategy}>
             {columns.map((c, i) => (
               <BoardColumn
@@ -278,7 +278,7 @@ export function BoardView({ boardId }: { boardId: ID }) {
         </div>
         <DragOverlay dropAnimation={{ duration: 180, easing: "cubic-bezier(0.2, 0, 0, 1)" }}>
           {activeTask ? (
-            <div className="w-[85vw] sm:w-[284px]">
+            <div className="w-[85vw] sm:w-[425px]">
               <TaskCardBody
                 task={activeTask}
                 tags={activeTask.tagIds.map((id) => tagsById[id]).filter(Boolean)}
@@ -286,8 +286,8 @@ export function BoardView({ boardId }: { boardId: ID }) {
               />
             </div>
           ) : activeColumn ? (
-            <div className="w-[85vw] rotate-1 rounded-2xl bg-surface-2 p-3 shadow-g3 sm:w-[300px]">
-              <p className="text-sm font-medium">{activeColumn.name}</p>
+            <div className="w-[85vw] rotate-1 rounded-2xl bg-card px-4 py-5 shadow-g3 sm:w-[425px]">
+              <p className="text-lg">{activeColumn.name}</p>
               <p className="text-xs text-muted-foreground">{totals[activeColumn.id] ?? 0} tasks</p>
             </div>
           ) : null}

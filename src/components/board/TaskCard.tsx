@@ -3,13 +3,11 @@ import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { NotebookPen } from "lucide-react";
 import type { Tag, Task } from "@/models/types";
-import { PRIORITY_BY_VALUE } from "@/models/constants";
 import { actions } from "@/store/actions";
 import { useUI } from "@/store/ui";
 import { TaskCheckbox } from "@/components/ui/misc";
 import { DueChip, PriorityFlag, StartChip, SubtaskProgress, TagChip } from "@/components/task/TaskBits";
 import { TaskMenu } from "@/components/task/TaskMenu";
-import { isOverdue } from "@/lib/dates";
 import { cn } from "@/lib/utils";
 
 interface CardProps {
@@ -22,8 +20,6 @@ interface CardProps {
 export const TaskCardBody = React.memo(function TaskCardBody({ task, tags, overlay, dragging }: CardProps) {
   const [editing, setEditing] = React.useState(false);
   const [draft, setDraft] = React.useState(task.title);
-  const overdue = isOverdue(task);
-  const priority = PRIORITY_BY_VALUE[task.priority];
 
   const commit = () => {
     setEditing(false);
@@ -34,23 +30,14 @@ export const TaskCardBody = React.memo(function TaskCardBody({ task, tags, overl
   return (
     <div
       className={cn(
-        "group relative rounded-xl border bg-card p-3 pl-3 transition-[box-shadow,border-color] duration-150",
-        "hover:shadow-g1 focus-within:shadow-g1",
-        overdue ? "border-overdue/40" : "border-border",
-        overlay && "rotate-[1.5deg] cursor-grabbing shadow-g3",
+        "group relative bg-card px-4 py-3 transition-colors duration-150 hover:bg-surface-2",
+        overlay && "cursor-grabbing rounded-xl shadow-g3",
         dragging && "opacity-40"
       )}
     >
-      {task.priority !== "none" && (
-        <span
-          className="absolute inset-y-3 left-0 w-[3px] rounded-r-full"
-          style={{ background: priority.color }}
-          aria-hidden
-        />
-      )}
-      <div className="flex items-start gap-2.5">
+      <div className="flex items-start gap-4">
         <TaskCheckbox
-          className="mt-0.5"
+          className="mt-0.5 border-[#5f6368] dark:border-muted-foreground"
           checked={task.completed}
           onCheckedChange={(c) => actions.setCompleted(task.id, c === true)}
           aria-label={task.completed ? `Mark "${task.title}" incomplete` : `Mark "${task.title}" complete`}
@@ -73,12 +60,12 @@ export const TaskCardBody = React.memo(function TaskCardBody({ task, tags, overl
                   setEditing(false);
                 }
               }}
-              className="w-full rounded bg-surface-2 px-1 text-sm outline-none ring-1 ring-primary"
+              className="w-full rounded bg-surface-2 px-1 text-base outline-none ring-1 ring-primary"
             />
           ) : (
             <p
               className={cn(
-                "break-words text-sm leading-5 text-foreground [overflow-wrap:anywhere] line-clamp-4",
+                "break-words text-base leading-6 text-foreground [overflow-wrap:anywhere] line-clamp-4",
                 task.completed && "text-muted-foreground line-through"
               )}
               onDoubleClick={(e) => {
@@ -92,12 +79,12 @@ export const TaskCardBody = React.memo(function TaskCardBody({ task, tags, overl
             </p>
           )}
           {task.description && (
-            <p className="mt-1 line-clamp-2 break-words text-xs leading-4 text-muted-foreground [overflow-wrap:anywhere]">
+            <p className="mt-0.5 line-clamp-2 break-words text-sm leading-5 text-muted-foreground [overflow-wrap:anywhere]">
               {task.description}
             </p>
           )}
           {(task.dueDate || task.startDate || task.subtasks.length > 0 || task.priority !== "none" || task.notes) && (
-            <div className="mt-2 flex flex-wrap items-center gap-x-2.5 gap-y-1.5">
+            <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1.5">
               <DueChip task={task} />
               <StartChip task={task} />
               <PriorityFlag priority={task.priority} />
@@ -118,7 +105,7 @@ export const TaskCardBody = React.memo(function TaskCardBody({ task, tags, overl
         {!overlay && (
           <TaskMenu
             task={task}
-            className="-mr-1.5 -mt-1 opacity-0 focus-visible:opacity-100 group-hover:opacity-100 data-[state=open]:opacity-100 max-md:opacity-100"
+            className="-mr-2 -mt-1 opacity-0 focus-visible:opacity-100 group-hover:opacity-100 data-[state=open]:opacity-100 max-md:opacity-100"
           />
         )}
       </div>
@@ -145,7 +132,7 @@ export function SortableTaskCard({ task, tags }: { task: Task; tags: Tag[] }) {
         listeners?.onKeyDown?.(e);
         if (e.key === "Enter" && !e.defaultPrevented && e.target === e.currentTarget) ui.openTask(task.id);
       }}
-      className="cursor-pointer rounded-xl outline-none focus-visible:ring-2 focus-visible:ring-ring touch-manipulation"
+      className="cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring touch-manipulation"
     >
       <TaskCardBody task={task} tags={tags} dragging={isDragging} />
     </div>

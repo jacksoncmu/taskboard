@@ -159,6 +159,13 @@
 }
 
 @layer utilities {
+  /* Sky-to-blue board backdrop. */
+  .board-gradient {
+    background: linear-gradient(170deg, #3fbbe0 0%, #3d9ee0 45%, #3b7fdc 100%);
+  }
+  .dark .board-gradient {
+    background: linear-gradient(170deg, #0f4a63 0%, #123f6b 45%, #142f63 100%);
+  }
   .scrollbar-thin {
     scrollbar-width: thin;
     scrollbar-color: var(--border-strong) transparent;
